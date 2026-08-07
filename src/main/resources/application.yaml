@@ -4,8 +4,8 @@ spring:
 
   datasource:
     url: jdbc:postgresql://localhost:5432/laundry_pos
-    username: postgres
-    password: 9113624230
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:}
 
   jpa:
     hibernate:
@@ -19,5 +19,5 @@ server:
 
 app:
   jwt:
-    secret: c3VwZXItc2VjcmV0LWtleS1mb3ItbGF1bmRyeS1wb3MtMjAyNi0xMjM0NTY=
+    secret: ${JWT_SECRET:c3VwZXItc2VjcmV0LWtleS1mb3ItbGF1bmRyeS1wb3MtMjAyNi0xMjM0NTY=}
     expiration-ms: 86400000
