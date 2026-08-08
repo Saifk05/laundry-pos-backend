@@ -5,7 +5,7 @@ spring:
   datasource:
     url: jdbc:postgresql://${DATABASE_HOST:localhost}:${DATABASE_PORT:5432}/${DATABASE_NAME:laundry_pos}
     username: ${DATABASE_USERNAME:postgres}
-    password: ${DATABASE_PASSWORD:9113624230 }
+    password: ${DATABASE_PASSWORD:9113624230}
 
   jpa:
     hibernate:
@@ -20,5 +20,5 @@ server:
 
 app:
   jwt:
-    secret: ${JWT_SECRET}
+    secret: ${JWT_SECRET:c3VwZXItc2VjcmV0LWtleS1mb3ItbGF1bmRyeS1wb3MtMjAyNi0xMjM0NTY=}
     expiration-ms: 86400000
