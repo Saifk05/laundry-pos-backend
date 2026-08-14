@@ -1,5 +1,7 @@
 package com.laundry.pos.response;
 
+import com.laundry.pos.model.Product;
+
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
@@ -7,31 +9,28 @@ import java.util.UUID;
 public record ProductResponse(
         UUID id,
         String name,
-        String category,
-        String icon,
-        String pricingUnit,
-        List<VariantResponse> variants,
-        List<ServiceResponse> services,
-        List<RequirementResponse> requirements
+        Product.PricingUnit unit,
+        boolean active,
+        List<TypeResponse> types
 ) {
 
-    public record VariantResponse(
+    public record TypeResponse(
             UUID id,
-            String name
+            String name,
+            List<ServiceResponse> services
     ) {
     }
 
     public record ServiceResponse(
-            UUID serviceId,
+            UUID id,
             String name,
             BigDecimal price
     ) {
     }
 
-    public record RequirementResponse(
-            UUID requirementId,
-            String name,
-            BigDecimal price
+    public record ProductListResponse(
+            String message,
+            List<ProductResponse> products
     ) {
     }
 }

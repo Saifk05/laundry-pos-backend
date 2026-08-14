@@ -1,25 +1,24 @@
 package com.laundry.pos.request;
 
+import com.laundry.pos.model.Product;
+
 import java.math.BigDecimal;
 import java.util.List;
 
 public record ProductRequest(
         String name,
-        String category,
-        String icon,
-        String pricingUnit,
-        List<String> variants,
-        List<ServiceRequest> services,
-        List<RequirementRequest> requirements
+        Product.PricingUnit unit,
+        boolean active,
+        List<TypeRequest> types
 ) {
 
-    public record ServiceRequest(
+    public record TypeRequest(
             String name,
-            BigDecimal price
+            List<ServiceRequest> services
     ) {
     }
 
-    public record RequirementRequest(
+    public record ServiceRequest(
             String name,
             BigDecimal price
     ) {
