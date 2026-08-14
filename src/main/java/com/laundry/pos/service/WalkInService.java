@@ -25,9 +25,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 public class WalkInService {
@@ -37,7 +39,6 @@ public class WalkInService {
     private final ExpressChargeRepository expressChargeRepository;
     private final CustomerRepository customerRepository;
     private final OrderRepository orderRepository;
-
 
     public WalkInService(
             ProductRepository productRepository,
@@ -63,11 +64,6 @@ public class WalkInService {
                 orderRepository;
     }
 
-
-    /* =========================================
-       WALK-IN SETUP
-    ========================================= */
-
     public WalkInSetupResponse getSetup() {
 
         List<ProductResponse> products =
@@ -77,7 +73,6 @@ public class WalkInService {
                         .map(this::toProductResponse)
                         .toList();
 
-
         List<CouponResponse> coupons =
                 couponRepository
                         .findAllByActiveTrue()
@@ -85,14 +80,12 @@ public class WalkInService {
                         .map(this::toCouponResponse)
                         .toList();
 
-
         List<ExpressChargeResponse> expressCharges =
                 expressChargeRepository
                         .findAllByActiveTrue()
                         .stream()
                         .map(this::toExpressChargeResponse)
                         .toList();
-
 
         return new WalkInSetupResponse(
                 "Walk-in setup fetched successfully",
@@ -102,39 +95,25 @@ public class WalkInService {
         );
     }
 
-
-    /* =========================================
-       CREATE WALK-IN ORDER
-    ========================================= */
-
     @Transactional
     public OrderResponse createWalkInOrder(
             WalkInOrderRequest request
     ) {
 
-        validateOrderRequest(request);
-
-
-        /* =========================================
-           CUSTOMER
-        ========================================= */
+        validateOrderRequest(
+                request
+        );
 
         Customer customer =
                 findOrCreateCustomer(
                         request.customer()
                 );
 
-
-        /* =========================================
-           ORDER ITEMS
-        ========================================= */
-
         List<Order.OrderItem> orderItems =
                 new ArrayList<>();
 
         BigDecimal subtotal =
                 BigDecimal.ZERO;
-
 
         for (
                 WalkInOrderRequest.OrderItemRequest itemRequest
@@ -156,23 +135,16 @@ public class WalkInService {
                     );
         }
 
-
         subtotal =
                 money(
                         subtotal
                 );
-
-
-        /* =========================================
-           COUPON
-        ========================================= */
 
         BigDecimal discountAmount =
                 BigDecimal.ZERO;
 
         String couponCode =
                 null;
-
 
         if (
                 request.couponId() != null
@@ -189,14 +161,14 @@ public class WalkInService {
                                     )
                             );
 
-
-            if (!coupon.isActive()) {
+            if (
+                    !coupon.isActive()
+            ) {
 
                 throw new RuntimeException(
                         "Coupon is not active"
                 );
             }
-
 
             if (
                     subtotal.compareTo(
@@ -212,63 +184,46 @@ public class WalkInService {
                 );
             }
 
-
             discountAmount =
                     calculateDiscount(
                             coupon,
                             subtotal
                     );
 
-
             couponCode =
                     coupon.getCode();
         }
-
 
         discountAmount =
                 money(
                         discountAmount
                 );
 
-
-        /* =========================================
-           AMOUNT AFTER DISCOUNT
-        ========================================= */
-
         BigDecimal amountAfterDiscount =
                 subtotal.subtract(
                         discountAmount
                 );
 
-
         if (
-                amountAfterDiscount
-                        .compareTo(
-                                BigDecimal.ZERO
-                        ) < 0
+                amountAfterDiscount.compareTo(
+                        BigDecimal.ZERO
+                ) < 0
         ) {
 
             amountAfterDiscount =
                     BigDecimal.ZERO;
         }
 
-
         amountAfterDiscount =
                 money(
                         amountAfterDiscount
                 );
-
-
-        /* =========================================
-           EXPRESS CHARGE
-        ========================================= */
 
         BigDecimal expressChargePercentage =
                 null;
 
         BigDecimal expressChargeAmount =
                 BigDecimal.ZERO;
-
 
         if (
                 request.expressChargeId() != null
@@ -285,7 +240,6 @@ public class WalkInService {
                                     )
                             );
 
-
             if (
                     !expressCharge.isActive()
             ) {
@@ -295,10 +249,8 @@ public class WalkInService {
                 );
             }
 
-
             expressChargePercentage =
                     expressCharge.getPercentage();
-
 
             expressChargeAmount =
                     amountAfterDiscount
@@ -312,35 +264,48 @@ public class WalkInService {
                             );
         }
 
-
         expressChargeAmount =
                 money(
                         expressChargeAmount
                 );
-
-
-        /* =========================================
-           TOTAL
-        ========================================= */
 
         BigDecimal totalAmount =
                 amountAfterDiscount.add(
                         expressChargeAmount
                 );
 
-
         totalAmount =
                 money(
                         totalAmount
                 );
 
+        Long sequence =
+                orderRepository
+                        .getNextOrderSequence();
 
-        /* =========================================
-           SAVE ORDER
-        ========================================= */
+        String orderNumber =
+                String.format(
+                        "LAUNDRY-%04d",
+                        sequence
+                );
+
+        LocalDate pickupDate =
+                LocalDate.now();
+
+        String pickupTime =
+                LocalTime.now()
+                        .format(
+                                DateTimeFormatter.ofPattern(
+                                        "hh:mm a"
+                                )
+                        );
 
         Order order =
                 new Order();
+
+        order.setOrderNumber(
+                orderNumber
+        );
 
         order.setCustomer(
                 customer
@@ -370,30 +335,42 @@ public class WalkInService {
                 totalAmount
         );
 
-        order.setStatus(
-                Order.OrderStatus.CREATED
+        order.setPickupDate(
+                pickupDate
+        );
+
+        order.setPickupTime(
+                pickupTime
+        );
+
+        order.setDeliveryDate(
+                request.deliveryDate()
+        );
+
+        order.setDeliveryTime(
+                request.deliveryTime()
+                        .trim()
+        );
+
+        order.setHomeDelivery(
+                Boolean.TRUE.equals(
+                        request.homeDelivery()
+                )
         );
 
         order.setItems(
                 orderItems
         );
 
-
         Order savedOrder =
                 orderRepository.save(
                         order
                 );
 
-
         return toOrderResponse(
                 savedOrder
         );
     }
-
-
-    /* =========================================
-       FIND / CREATE CUSTOMER
-    ========================================= */
 
     private Customer findOrCreateCustomer(
             WalkInOrderRequest.CustomerRequest request
@@ -403,9 +380,10 @@ public class WalkInService {
                 request.phone()
                         .trim();
 
-
         return customerRepository
-                .findByPhone(phone)
+                .findByPhone(
+                        phone
+                )
                 .orElseGet(() -> {
 
                     if (
@@ -417,7 +395,6 @@ public class WalkInService {
                                 "Customer name is required for new customer"
                         );
                     }
-
 
                     Customer customer =
                             new Customer();
@@ -435,18 +412,12 @@ public class WalkInService {
                             true
                     );
 
-
                     return customerRepository
                             .save(
                                     customer
                             );
                 });
     }
-
-
-    /* =========================================
-       BUILD ORDER ITEM
-    ========================================= */
 
     private Order.OrderItem buildOrderItem(
             WalkInOrderRequest.OrderItemRequest request
@@ -461,7 +432,6 @@ public class WalkInService {
             );
         }
 
-
         if (
                 request.typeId() == null
         ) {
@@ -471,7 +441,6 @@ public class WalkInService {
             );
         }
 
-
         if (
                 request.serviceId() == null
         ) {
@@ -480,7 +449,6 @@ public class WalkInService {
                     "Service id is required"
             );
         }
-
 
         if (
                 request.quantity() == null ||
@@ -495,7 +463,6 @@ public class WalkInService {
             );
         }
 
-
         Product product =
                 productRepository
                         .findById(
@@ -507,23 +474,24 @@ public class WalkInService {
                                 )
                         );
 
-
-        if (!product.isActive()) {
+        if (
+                !product.isActive()
+        ) {
 
             throw new RuntimeException(
                     "Product is not active"
             );
         }
 
-
         Product.ProductType productType =
                 product.getTypes()
                         .stream()
-                        .filter(type ->
-                                type.getId()
-                                        .equals(
-                                                request.typeId()
-                                        )
+                        .filter(
+                                type ->
+                                        type.getId()
+                                                .equals(
+                                                        request.typeId()
+                                                )
                         )
                         .findFirst()
                         .orElseThrow(() ->
@@ -532,15 +500,15 @@ public class WalkInService {
                                 )
                         );
 
-
         Product.ProductServicePrice service =
                 productType.getServices()
                         .stream()
-                        .filter(item ->
-                                item.getId()
-                                        .equals(
-                                                request.serviceId()
-                                        )
+                        .filter(
+                                item ->
+                                        item.getId()
+                                                .equals(
+                                                        request.serviceId()
+                                                )
                         )
                         .findFirst()
                         .orElseThrow(() ->
@@ -549,21 +517,15 @@ public class WalkInService {
                                 )
                         );
 
-
         BigDecimal quantity =
                 request.quantity();
-
-
-        /*
-         * PC products cannot have decimal quantity.
-         */
 
         if (
                 product.getUnit()
                         == Product.PricingUnit.PC
-                &&
-                quantity.stripTrailingZeros()
-                        .scale() > 0
+                        &&
+                        quantity.stripTrailingZeros()
+                                .scale() > 0
         ) {
 
             throw new RuntimeException(
@@ -571,29 +533,23 @@ public class WalkInService {
             );
         }
 
-
         BigDecimal unitPrice =
                 money(
                         service.getPrice()
                 );
 
-
         BigDecimal lineTotal =
-                unitPrice
-                        .multiply(
-                                quantity
-                        );
-
+                unitPrice.multiply(
+                        quantity
+                );
 
         lineTotal =
                 money(
                         lineTotal
                 );
 
-
         Order.OrderItem orderItem =
                 new Order.OrderItem();
-
 
         orderItem.setProductId(
                 product.getId()
@@ -635,14 +591,8 @@ public class WalkInService {
                 lineTotal
         );
 
-
         return orderItem;
     }
-
-
-    /* =========================================
-       CALCULATE DISCOUNT
-    ========================================= */
 
     private BigDecimal calculateDiscount(
             Coupon coupon,
@@ -650,7 +600,6 @@ public class WalkInService {
     ) {
 
         BigDecimal discount;
-
 
         if (
                 coupon.getDiscountType()
@@ -674,12 +623,6 @@ public class WalkInService {
                     coupon.getDiscountValue();
         }
 
-
-        /*
-         * Discount cannot be greater
-         * than the order subtotal.
-         */
-
         if (
                 discount.compareTo(
                         subtotal
@@ -690,16 +633,10 @@ public class WalkInService {
                     subtotal;
         }
 
-
         return money(
                 discount
         );
     }
-
-
-    /* =========================================
-       VALIDATE ORDER REQUEST
-    ========================================= */
 
     private void validateOrderRequest(
             WalkInOrderRequest request
@@ -714,7 +651,6 @@ public class WalkInService {
             );
         }
 
-
         if (
                 request.customer() == null
         ) {
@@ -723,7 +659,6 @@ public class WalkInService {
                     "Customer is required"
             );
         }
-
 
         if (
                 request.customer().phone() == null ||
@@ -735,7 +670,6 @@ public class WalkInService {
             );
         }
 
-
         if (
                 request.items() == null ||
                 request.items().isEmpty()
@@ -745,12 +679,38 @@ public class WalkInService {
                     "At least one order item is required"
             );
         }
+
+        if (
+                request.deliveryDate() == null
+        ) {
+
+            throw new RuntimeException(
+                    "Delivery date is required"
+            );
+        }
+
+        if (
+                request.deliveryTime() == null ||
+                request.deliveryTime().isBlank()
+        ) {
+
+            throw new RuntimeException(
+                    "Delivery time is required"
+            );
+        }
+
+        if (
+                request.deliveryDate()
+                        .isBefore(
+                                LocalDate.now()
+                        )
+        ) {
+
+            throw new RuntimeException(
+                    "Delivery date cannot be before pickup date"
+            );
+        }
     }
-
-
-    /* =========================================
-       MONEY FORMAT
-    ========================================= */
 
     private BigDecimal money(
             BigDecimal value
@@ -767,17 +727,11 @@ public class WalkInService {
                     );
         }
 
-
         return value.setScale(
                 2,
                 RoundingMode.HALF_UP
         );
     }
-
-
-    /* =========================================
-       PRODUCT RESPONSE
-    ========================================= */
 
     private ProductResponse toProductResponse(
             Product product
@@ -802,7 +756,6 @@ public class WalkInService {
                                             )
                                             .toList();
 
-
                             return new ProductResponse
                                     .TypeResponse(
                                     type.getId(),
@@ -812,7 +765,6 @@ public class WalkInService {
                         })
                         .toList();
 
-
         return new ProductResponse(
                 product.getId(),
                 product.getName(),
@@ -821,11 +773,6 @@ public class WalkInService {
                 types
         );
     }
-
-
-    /* =========================================
-       COUPON RESPONSE
-    ========================================= */
 
     private CouponResponse toCouponResponse(
             Coupon coupon
@@ -841,13 +788,7 @@ public class WalkInService {
         );
     }
 
-
-    /* =========================================
-       EXPRESS CHARGE RESPONSE
-    ========================================= */
-
-    private ExpressChargeResponse
-    toExpressChargeResponse(
+    private ExpressChargeResponse toExpressChargeResponse(
             ExpressCharge expressCharge
     ) {
 
@@ -859,19 +800,12 @@ public class WalkInService {
         );
     }
 
-
-    /* =========================================
-       ORDER RESPONSE
-    ========================================= */
-
     private OrderResponse toOrderResponse(
             Order order
     ) {
 
-        OrderResponse.CustomerResponse
-                customerResponse =
-                new OrderResponse
-                        .CustomerResponse(
+        OrderResponse.CustomerResponse customerResponse =
+                new OrderResponse.CustomerResponse(
                         order.getCustomer()
                                 .getId(),
                         order.getCustomer()
@@ -880,14 +814,11 @@ public class WalkInService {
                                 .getPhone()
                 );
 
-
-        List<OrderResponse.OrderItemResponse>
-                items =
+        List<OrderResponse.OrderItemResponse> items =
                 order.getItems()
                         .stream()
                         .map(item ->
-                                new OrderResponse
-                                        .OrderItemResponse(
+                                new OrderResponse.OrderItemResponse(
                                         item.getId(),
                                         item.getProductId(),
                                         item.getProductName(),
@@ -903,9 +834,9 @@ public class WalkInService {
                         )
                         .toList();
 
-
         return new OrderResponse(
                 order.getId(),
+                order.getOrderNumber(),
                 customerResponse,
                 items,
                 order.getSubtotal(),
@@ -914,8 +845,16 @@ public class WalkInService {
                 order.getExpressChargePercentage(),
                 order.getExpressChargeAmount(),
                 order.getTotalAmount(),
+                order.getPickupDate(),
+                order.getPickupTime(),
+                order.getDeliveryDate(),
+                order.getDeliveryTime(),
+                order.getStorageLabel(),
+                order.isHomeDelivery(),
+                order.isSettled(),
                 order.getStatus(),
                 order.getCreatedAt(),
+                order.getUpdatedAt(),
                 "Walk-in order created successfully"
         );
     }

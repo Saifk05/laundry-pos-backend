@@ -3,18 +3,35 @@ package com.laundry.pos.model;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "orders")
+@Table(
+        name = "orders",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_order_number",
+                        columnNames = "order_number"
+                )
+        }
+)
 public class Order {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
+
+    @Column(
+            name = "order_number",
+            nullable = false,
+            unique = true,
+            length = 30
+    )
+    private String orderNumber;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
@@ -70,20 +87,67 @@ public class Order {
     )
     private BigDecimal expressChargePercentage;
 
+    @Column(
+            name = "pickup_date"
+    )
+    private LocalDate pickupDate;
+
+    @Column(
+            name = "pickup_time",
+            length = 50
+    )
+    private String pickupTime;
+
+    @Column(
+            name = "delivery_date"
+    )
+    private LocalDate deliveryDate;
+
+    @Column(
+            name = "delivery_time",
+            length = 50
+    )
+    private String deliveryTime;
+
+    @Column(
+            name = "storage_label",
+            length = 150
+    )
+    private String storageLabel;
+
+    @Column(
+            name = "home_delivery",
+            nullable = false
+    )
+    private boolean homeDelivery = false;
+
+    @Column(
+            name = "settled",
+            nullable = false
+    )
+    private boolean settled = false;
+
     @Enumerated(EnumType.STRING)
     @Column(
+            name = "status",
             nullable = false,
-            length = 30
+            length = 40
     )
     private OrderStatus status =
-            OrderStatus.CREATED;
+            OrderStatus.NEW_ORDER;
 
     @Column(
             name = "created_at",
+            nullable = false,
+            updatable = false
+    )
+    private LocalDateTime createdAt;
+
+    @Column(
+            name = "updated_at",
             nullable = false
     )
-    private LocalDateTime createdAt =
-            LocalDateTime.now();
+    private LocalDateTime updatedAt;
 
     @OneToMany(
             mappedBy = "order",
@@ -94,45 +158,75 @@ public class Order {
     private List<OrderItem> items =
             new ArrayList<>();
 
-
     public Order() {
     }
 
+    @PrePersist
+    public void prePersist() {
+
+        LocalDateTime now =
+                LocalDateTime.now();
+
+        if (this.createdAt == null) {
+            this.createdAt = now;
+        }
+
+        this.updatedAt = now;
+    }
+
+    @PreUpdate
+    public void preUpdate() {
+
+        this.updatedAt =
+                LocalDateTime.now();
+    }
 
     public UUID getId() {
         return id;
     }
 
-
-    public void setId(UUID id) {
+    public void setId(
+            UUID id
+    ) {
         this.id = id;
     }
 
+    public String getOrderNumber() {
+        return orderNumber;
+    }
+
+    public void setOrderNumber(
+            String orderNumber
+    ) {
+        this.orderNumber =
+                orderNumber;
+    }
 
     public Customer getCustomer() {
         return customer;
     }
 
-
-    public void setCustomer(Customer customer) {
-        this.customer = customer;
+    public void setCustomer(
+            Customer customer
+    ) {
+        this.customer =
+                customer;
     }
-
 
     public BigDecimal getSubtotal() {
         return subtotal;
     }
 
-
-    public void setSubtotal(BigDecimal subtotal) {
-        this.subtotal = subtotal;
+    public void setSubtotal(
+            BigDecimal subtotal
+    ) {
+        this.subtotal =
+                subtotal;
     }
-
 
     public BigDecimal getDiscountAmount() {
         return discountAmount;
     }
-
 
     public void setDiscountAmount(
             BigDecimal discountAmount
@@ -141,11 +235,9 @@ public class Order {
                 discountAmount;
     }
 
-
     public BigDecimal getExpressChargeAmount() {
         return expressChargeAmount;
     }
-
 
     public void setExpressChargeAmount(
             BigDecimal expressChargeAmount
@@ -154,11 +246,9 @@ public class Order {
                 expressChargeAmount;
     }
 
-
     public BigDecimal getTotalAmount() {
         return totalAmount;
     }
-
 
     public void setTotalAmount(
             BigDecimal totalAmount
@@ -167,11 +257,9 @@ public class Order {
                 totalAmount;
     }
 
-
     public String getCouponCode() {
         return couponCode;
     }
-
 
     public void setCouponCode(
             String couponCode
@@ -180,11 +268,9 @@ public class Order {
                 couponCode;
     }
 
-
     public BigDecimal getExpressChargePercentage() {
         return expressChargePercentage;
     }
-
 
     public void setExpressChargePercentage(
             BigDecimal expressChargePercentage
@@ -193,35 +279,119 @@ public class Order {
                 expressChargePercentage;
     }
 
+    public LocalDate getPickupDate() {
+        return pickupDate;
+    }
+
+    public void setPickupDate(
+            LocalDate pickupDate
+    ) {
+        this.pickupDate =
+                pickupDate;
+    }
+
+    public String getPickupTime() {
+        return pickupTime;
+    }
+
+    public void setPickupTime(
+            String pickupTime
+    ) {
+        this.pickupTime =
+                pickupTime;
+    }
+
+    public LocalDate getDeliveryDate() {
+        return deliveryDate;
+    }
+
+    public void setDeliveryDate(
+            LocalDate deliveryDate
+    ) {
+        this.deliveryDate =
+                deliveryDate;
+    }
+
+    public String getDeliveryTime() {
+        return deliveryTime;
+    }
+
+    public void setDeliveryTime(
+            String deliveryTime
+    ) {
+        this.deliveryTime =
+                deliveryTime;
+    }
+
+    public String getStorageLabel() {
+        return storageLabel;
+    }
+
+    public void setStorageLabel(
+            String storageLabel
+    ) {
+        this.storageLabel =
+                storageLabel;
+    }
+
+    public boolean isHomeDelivery() {
+        return homeDelivery;
+    }
+
+    public void setHomeDelivery(
+            boolean homeDelivery
+    ) {
+        this.homeDelivery =
+                homeDelivery;
+    }
+
+    public boolean isSettled() {
+        return settled;
+    }
+
+    public void setSettled(
+            boolean settled
+    ) {
+        this.settled =
+                settled;
+    }
 
     public OrderStatus getStatus() {
         return status;
     }
 
-
     public void setStatus(
             OrderStatus status
     ) {
-        this.status = status;
+        this.status =
+                status;
     }
-
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
-
     public void setCreatedAt(
             LocalDateTime createdAt
     ) {
-        this.createdAt = createdAt;
+        this.createdAt =
+                createdAt;
     }
 
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(
+            LocalDateTime updatedAt
+    ) {
+        this.updatedAt =
+                updatedAt;
+    }
 
     public List<OrderItem> getItems() {
         return items;
     }
-
 
     public void setItems(
             List<OrderItem> items
@@ -237,7 +407,6 @@ public class Order {
         }
     }
 
-
     public void addItem(
             OrderItem item
     ) {
@@ -246,7 +415,6 @@ public class Order {
 
         this.items.add(item);
     }
-
 
     public void removeItem(
             OrderItem item
@@ -257,18 +425,22 @@ public class Order {
         item.setOrder(null);
     }
 
-
     public enum OrderStatus {
-        CREATED,
-        PROCESSING,
-        READY,
-        COMPLETED,
+        NEW_ORDER,
+
+        PROCESSING_AT_STORE,
+
+        READY_ORDER,
+
+        DELIVERED,
+
         CANCELLED
     }
 
-
     @Entity
-    @Table(name = "order_items")
+    @Table(
+            name = "order_items"
+    )
     public static class OrderItem {
 
         @Id
@@ -323,12 +495,14 @@ public class Order {
 
         @Enumerated(EnumType.STRING)
         @Column(
+                name = "unit",
                 nullable = false,
                 length = 10
         )
         private Product.PricingUnit unit;
 
         @Column(
+                name = "quantity",
                 nullable = false,
                 precision = 10,
                 scale = 2
@@ -351,59 +525,55 @@ public class Order {
         )
         private BigDecimal lineTotal;
 
-
         public OrderItem() {
         }
-
 
         public UUID getId() {
             return id;
         }
 
-
-        public void setId(UUID id) {
+        public void setId(
+                UUID id
+        ) {
             this.id = id;
         }
-
 
         public Order getOrder() {
             return order;
         }
 
-
-        public void setOrder(Order order) {
-            this.order = order;
+        public void setOrder(
+                Order order
+        ) {
+            this.order =
+                    order;
         }
-
 
         public UUID getProductId() {
             return productId;
         }
 
-
         public void setProductId(
                 UUID productId
         ) {
-            this.productId = productId;
+            this.productId =
+                    productId;
         }
-
 
         public String getProductName() {
             return productName;
         }
 
-
         public void setProductName(
                 String productName
         ) {
-            this.productName = productName;
+            this.productName =
+                    productName;
         }
-
 
         public UUID getProductTypeId() {
             return productTypeId;
         }
-
 
         public void setProductTypeId(
                 UUID productTypeId
@@ -412,11 +582,9 @@ public class Order {
                     productTypeId;
         }
 
-
         public String getProductTypeName() {
             return productTypeName;
         }
-
 
         public void setProductTypeName(
                 String productTypeName
@@ -425,23 +593,20 @@ public class Order {
                     productTypeName;
         }
 
-
         public UUID getServiceId() {
             return serviceId;
         }
 
-
         public void setServiceId(
                 UUID serviceId
         ) {
-            this.serviceId = serviceId;
+            this.serviceId =
+                    serviceId;
         }
-
 
         public String getServiceName() {
             return serviceName;
         }
-
 
         public void setServiceName(
                 String serviceName
@@ -450,52 +615,48 @@ public class Order {
                     serviceName;
         }
 
-
         public Product.PricingUnit getUnit() {
             return unit;
         }
 
-
         public void setUnit(
                 Product.PricingUnit unit
         ) {
-            this.unit = unit;
+            this.unit =
+                    unit;
         }
-
 
         public BigDecimal getQuantity() {
             return quantity;
         }
 
-
         public void setQuantity(
                 BigDecimal quantity
         ) {
-            this.quantity = quantity;
+            this.quantity =
+                    quantity;
         }
-
 
         public BigDecimal getUnitPrice() {
             return unitPrice;
         }
 
-
         public void setUnitPrice(
                 BigDecimal unitPrice
         ) {
-            this.unitPrice = unitPrice;
+            this.unitPrice =
+                    unitPrice;
         }
-
 
         public BigDecimal getLineTotal() {
             return lineTotal;
         }
 
-
         public void setLineTotal(
                 BigDecimal lineTotal
         ) {
-            this.lineTotal = lineTotal;
+            this.lineTotal =
+                    lineTotal;
         }
     }
 }

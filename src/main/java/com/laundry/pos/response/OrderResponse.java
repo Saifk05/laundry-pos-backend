@@ -4,12 +4,14 @@ import com.laundry.pos.model.Order;
 import com.laundry.pos.model.Product;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
 public record OrderResponse(
         UUID id,
+        String orderNumber,
         CustomerResponse customer,
         List<OrderItemResponse> items,
         BigDecimal subtotal,
@@ -18,8 +20,16 @@ public record OrderResponse(
         BigDecimal expressChargePercentage,
         BigDecimal expressChargeAmount,
         BigDecimal totalAmount,
+        LocalDate pickupDate,
+        String pickupTime,
+        LocalDate deliveryDate,
+        String deliveryTime,
+        String storageLabel,
+        boolean homeDelivery,
+        boolean settled,
         Order.OrderStatus status,
         LocalDateTime createdAt,
+        LocalDateTime updatedAt,
         String message
 ) {
 
