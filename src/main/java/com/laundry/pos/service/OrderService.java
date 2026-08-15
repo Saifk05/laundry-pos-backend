@@ -4,6 +4,7 @@ import com.laundry.pos.model.Order;
 import com.laundry.pos.repository.OrderRepository;
 import com.laundry.pos.request.OrderStatusRequest;
 import com.laundry.pos.request.RescheduleOrderRequest;
+import com.laundry.pos.request.RetagOrderRequest;
 import com.laundry.pos.response.B2COrderListResponse;
 import com.laundry.pos.response.B2COrderResponse;
 import com.laundry.pos.response.OrderResponse;
@@ -11,6 +12,8 @@ import com.laundry.pos.response.OrderResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -544,6 +547,323 @@ public class OrderService {
         );
     }
 
+    @Transactional
+    public OrderResponse retagOrder(
+            UUID id,
+            RetagOrderRequest request
+    ) {
+
+        if (
+                request == null ||
+                request.items() == null ||
+                request.items().isEmpty()
+        ) {
+
+            throw new RuntimeException(
+                    "Re-tag items are required"
+            );
+        }
+
+        Order order =
+                getOrder(
+                        id
+                );
+
+        if (
+                order.getStatus()
+                        == Order.OrderStatus.DELIVERED
+        ) {
+
+            throw new RuntimeException(
+                    "Delivered order cannot be re-tagged"
+            );
+        }
+
+        if (
+                order.getStatus()
+                        == Order.OrderStatus.CANCELLED
+        ) {
+
+            throw new RuntimeException(
+                    "Cancelled order cannot be re-tagged"
+            );
+        }
+
+        if (
+                order.isSettled()
+        ) {
+
+            throw new RuntimeException(
+                    "Settled order cannot be re-tagged"
+            );
+        }
+
+        for (
+                RetagOrderRequest.Item requestItem
+                        : request.items()
+        ) {
+
+            if (
+                    requestItem == null ||
+                    requestItem.orderItemId() == null
+            ) {
+
+                throw new RuntimeException(
+                        "Order item id is required"
+                );
+            }
+
+            Order.OrderItem orderItem =
+                    order.getItems()
+                            .stream()
+                            .filter(item ->
+                                    item.getId()
+                                            .equals(
+                                                    requestItem
+                                                            .orderItemId()
+                                            )
+                            )
+                            .findFirst()
+                            .orElseThrow(() ->
+                                    new RuntimeException(
+                                            "Order item not found"
+                                    )
+                            );
+
+            BigDecimal quantity =
+                    requestItem.quantity();
+
+            if (
+                    quantity == null ||
+                    quantity.compareTo(
+                            BigDecimal.ZERO
+                    ) < 0
+            ) {
+
+                throw new RuntimeException(
+                        "Invalid quantity"
+                );
+            }
+
+            if (
+                    quantity.compareTo(
+                            orderItem.getQuantity()
+                    ) > 0
+            ) {
+
+                throw new RuntimeException(
+                        "Re-tag quantity cannot exceed original quantity"
+                );
+            }
+
+            orderItem.setQuantity(
+                    quantity
+            );
+
+            orderItem.setLineTotal(
+                    orderItem
+                            .getUnitPrice()
+                            .multiply(
+                                    quantity
+                            )
+                            .setScale(
+                                    2,
+                                    RoundingMode.HALF_UP
+                            )
+            );
+        }
+
+        order.getItems()
+                .removeIf(
+                        item ->
+                                item.getQuantity()
+                                        .compareTo(
+                                                BigDecimal.ZERO
+                                        ) == 0
+                );
+
+        if (
+                order.getItems()
+                        .isEmpty()
+        ) {
+
+            throw new RuntimeException(
+                    "Order must contain at least one item"
+            );
+        }
+
+        BigDecimal subtotal =
+                order.getItems()
+                        .stream()
+                        .map(
+                                Order.OrderItem
+                                        ::getLineTotal
+                        )
+                        .reduce(
+                                BigDecimal.ZERO,
+                                BigDecimal::add
+                        )
+                        .setScale(
+                                2,
+                                RoundingMode.HALF_UP
+                        );
+
+        order.setSubtotal(
+                subtotal
+        );
+
+        BigDecimal discountAmount =
+                order.getDiscountAmount() != null
+                        ? order.getDiscountAmount()
+                        : BigDecimal.ZERO;
+
+        if (
+                discountAmount.compareTo(
+                        subtotal
+                ) > 0
+        ) {
+
+            discountAmount =
+                    subtotal;
+        }
+
+        discountAmount =
+                discountAmount.setScale(
+                        2,
+                        RoundingMode.HALF_UP
+                );
+
+        order.setDiscountAmount(
+                discountAmount
+        );
+
+        BigDecimal afterDiscount =
+                subtotal.subtract(
+                        discountAmount
+                );
+
+        BigDecimal expressChargeAmount =
+                BigDecimal.ZERO;
+
+        if (
+                order.getExpressChargePercentage()
+                        != null &&
+                order.getExpressChargePercentage()
+                        .compareTo(
+                                BigDecimal.ZERO
+                        ) > 0
+        ) {
+
+            expressChargeAmount =
+                    afterDiscount
+                            .multiply(
+                                    order.getExpressChargePercentage()
+                            )
+                            .divide(
+                                    BigDecimal.valueOf(
+                                            100
+                                    ),
+                                    2,
+                                    RoundingMode.HALF_UP
+                            );
+        }
+
+        order.setExpressChargeAmount(
+                expressChargeAmount
+        );
+
+        BigDecimal totalAmount =
+                afterDiscount
+                        .add(
+                                expressChargeAmount
+                        )
+                        .setScale(
+                                2,
+                                RoundingMode.HALF_UP
+                        );
+
+        order.setTotalAmount(
+                totalAmount
+        );
+
+        BigDecimal paidAmount =
+                order.getPaidAmount() != null
+                        ? order.getPaidAmount()
+                        : BigDecimal.ZERO;
+
+        BigDecimal balanceAmount =
+                totalAmount.subtract(
+                        paidAmount
+                );
+
+        if (
+                balanceAmount.compareTo(
+                        BigDecimal.ZERO
+                ) < 0
+        ) {
+
+            balanceAmount =
+                    BigDecimal.ZERO;
+        }
+
+        order.setBalanceAmount(
+                balanceAmount.setScale(
+                        2,
+                        RoundingMode.HALF_UP
+                )
+        );
+
+        if (
+                paidAmount.compareTo(
+                        BigDecimal.ZERO
+                ) == 0
+        ) {
+
+            order.setPaymentStatus(
+                    Order.PaymentStatus.PENDING
+            );
+
+            order.setSettled(
+                    false
+            );
+
+        } else if (
+                paidAmount.compareTo(
+                        totalAmount
+                ) >= 0
+        ) {
+
+            order.setPaymentStatus(
+                    Order.PaymentStatus.SETTLED
+            );
+
+            order.setSettled(
+                    true
+            );
+
+        } else {
+
+            order.setPaymentStatus(
+                    Order.PaymentStatus.PARTIALLY_PAID
+            );
+
+            order.setSettled(
+                    false
+            );
+        }
+
+        Order updatedOrder =
+                orderRepository.save(
+                        order
+                );
+
+        return toOrderResponse(
+                updatedOrder,
+                "Order re-tagged successfully"
+        );
+    }
+
+
     private void validateStatusChange(
             Order order,
             Order.OrderStatus newStatus
@@ -755,7 +1075,7 @@ public class OrderService {
 
                 order.getUpdatedAt(),
 
-                "Walk-in order created successfully"
+                message
         );
     }
 }

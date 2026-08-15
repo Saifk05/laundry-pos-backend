@@ -3,6 +3,7 @@ package com.laundry.pos.controller;
 import com.laundry.pos.model.Order;
 import com.laundry.pos.request.OrderStatusRequest;
 import com.laundry.pos.request.RescheduleOrderRequest;
+import com.laundry.pos.request.RetagOrderRequest;
 import com.laundry.pos.response.B2COrderListResponse;
 import com.laundry.pos.response.B2COrderResponse;
 import com.laundry.pos.response.OrderResponse;
@@ -157,6 +158,20 @@ public class OrderController {
                 orderService.updateStorageLabel(
                         id,
                         storageLabel
+                )
+        );
+    }
+
+    @PutMapping("/{id}/retag")
+    public ResponseEntity<OrderResponse> retagOrder(
+            @PathVariable UUID id,
+            @RequestBody RetagOrderRequest request
+    ) {
+
+        return ResponseEntity.ok(
+                orderService.retagOrder(
+                        id,
+                        request
                 )
         );
     }
