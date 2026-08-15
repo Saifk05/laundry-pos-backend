@@ -75,6 +75,33 @@ public class Order {
     private BigDecimal totalAmount;
 
     @Column(
+            name = "paid_amount",
+            nullable = false,
+            precision = 12,
+            scale = 2
+    )
+    private BigDecimal paidAmount =
+            BigDecimal.ZERO;
+
+    @Column(
+            name = "balance_amount",
+            nullable = false,
+            precision = 12,
+            scale = 2
+    )
+    private BigDecimal balanceAmount =
+            BigDecimal.ZERO;
+
+    @Enumerated(EnumType.STRING)
+    @Column(
+            name = "payment_status",
+            nullable = false,
+            length = 30
+    )
+    private PaymentStatus paymentStatus =
+            PaymentStatus.PENDING;
+
+    @Column(
             name = "coupon_code",
             length = 50
     )
@@ -158,8 +185,10 @@ public class Order {
     private List<OrderItem> items =
             new ArrayList<>();
 
+
     public Order() {
     }
+
 
     @PrePersist
     public void prePersist() {
@@ -171,8 +200,27 @@ public class Order {
             this.createdAt = now;
         }
 
+        if (this.paidAmount == null) {
+            this.paidAmount =
+                    BigDecimal.ZERO;
+        }
+
+        if (this.balanceAmount == null) {
+
+            this.balanceAmount =
+                    this.totalAmount != null
+                            ? this.totalAmount
+                            : BigDecimal.ZERO;
+        }
+
+        if (this.paymentStatus == null) {
+            this.paymentStatus =
+                    PaymentStatus.PENDING;
+        }
+
         this.updatedAt = now;
     }
+
 
     @PreUpdate
     public void preUpdate() {
@@ -181,9 +229,11 @@ public class Order {
                 LocalDateTime.now();
     }
 
+
     public UUID getId() {
         return id;
     }
+
 
     public void setId(
             UUID id
@@ -191,9 +241,11 @@ public class Order {
         this.id = id;
     }
 
+
     public String getOrderNumber() {
         return orderNumber;
     }
+
 
     public void setOrderNumber(
             String orderNumber
@@ -202,9 +254,11 @@ public class Order {
                 orderNumber;
     }
 
+
     public Customer getCustomer() {
         return customer;
     }
+
 
     public void setCustomer(
             Customer customer
@@ -213,9 +267,11 @@ public class Order {
                 customer;
     }
 
+
     public BigDecimal getSubtotal() {
         return subtotal;
     }
+
 
     public void setSubtotal(
             BigDecimal subtotal
@@ -224,9 +280,11 @@ public class Order {
                 subtotal;
     }
 
+
     public BigDecimal getDiscountAmount() {
         return discountAmount;
     }
+
 
     public void setDiscountAmount(
             BigDecimal discountAmount
@@ -235,9 +293,11 @@ public class Order {
                 discountAmount;
     }
 
+
     public BigDecimal getExpressChargeAmount() {
         return expressChargeAmount;
     }
+
 
     public void setExpressChargeAmount(
             BigDecimal expressChargeAmount
@@ -246,9 +306,11 @@ public class Order {
                 expressChargeAmount;
     }
 
+
     public BigDecimal getTotalAmount() {
         return totalAmount;
     }
+
 
     public void setTotalAmount(
             BigDecimal totalAmount
@@ -257,9 +319,50 @@ public class Order {
                 totalAmount;
     }
 
+
+    public BigDecimal getPaidAmount() {
+        return paidAmount;
+    }
+
+
+    public void setPaidAmount(
+            BigDecimal paidAmount
+    ) {
+        this.paidAmount =
+                paidAmount;
+    }
+
+
+    public BigDecimal getBalanceAmount() {
+        return balanceAmount;
+    }
+
+
+    public void setBalanceAmount(
+            BigDecimal balanceAmount
+    ) {
+        this.balanceAmount =
+                balanceAmount;
+    }
+
+
+    public PaymentStatus getPaymentStatus() {
+        return paymentStatus;
+    }
+
+
+    public void setPaymentStatus(
+            PaymentStatus paymentStatus
+    ) {
+        this.paymentStatus =
+                paymentStatus;
+    }
+
+
     public String getCouponCode() {
         return couponCode;
     }
+
 
     public void setCouponCode(
             String couponCode
@@ -268,9 +371,11 @@ public class Order {
                 couponCode;
     }
 
+
     public BigDecimal getExpressChargePercentage() {
         return expressChargePercentage;
     }
+
 
     public void setExpressChargePercentage(
             BigDecimal expressChargePercentage
@@ -279,9 +384,11 @@ public class Order {
                 expressChargePercentage;
     }
 
+
     public LocalDate getPickupDate() {
         return pickupDate;
     }
+
 
     public void setPickupDate(
             LocalDate pickupDate
@@ -290,9 +397,11 @@ public class Order {
                 pickupDate;
     }
 
+
     public String getPickupTime() {
         return pickupTime;
     }
+
 
     public void setPickupTime(
             String pickupTime
@@ -301,9 +410,11 @@ public class Order {
                 pickupTime;
     }
 
+
     public LocalDate getDeliveryDate() {
         return deliveryDate;
     }
+
 
     public void setDeliveryDate(
             LocalDate deliveryDate
@@ -312,9 +423,11 @@ public class Order {
                 deliveryDate;
     }
 
+
     public String getDeliveryTime() {
         return deliveryTime;
     }
+
 
     public void setDeliveryTime(
             String deliveryTime
@@ -323,9 +436,11 @@ public class Order {
                 deliveryTime;
     }
 
+
     public String getStorageLabel() {
         return storageLabel;
     }
+
 
     public void setStorageLabel(
             String storageLabel
@@ -334,9 +449,11 @@ public class Order {
                 storageLabel;
     }
 
+
     public boolean isHomeDelivery() {
         return homeDelivery;
     }
+
 
     public void setHomeDelivery(
             boolean homeDelivery
@@ -345,9 +462,11 @@ public class Order {
                 homeDelivery;
     }
 
+
     public boolean isSettled() {
         return settled;
     }
+
 
     public void setSettled(
             boolean settled
@@ -356,9 +475,11 @@ public class Order {
                 settled;
     }
 
+
     public OrderStatus getStatus() {
         return status;
     }
+
 
     public void setStatus(
             OrderStatus status
@@ -367,9 +488,11 @@ public class Order {
                 status;
     }
 
+
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
+
 
     public void setCreatedAt(
             LocalDateTime createdAt
@@ -378,9 +501,11 @@ public class Order {
                 createdAt;
     }
 
+
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
     }
+
 
     public void setUpdatedAt(
             LocalDateTime updatedAt
@@ -389,9 +514,11 @@ public class Order {
                 updatedAt;
     }
 
+
     public List<OrderItem> getItems() {
         return items;
     }
+
 
     public void setItems(
             List<OrderItem> items
@@ -407,6 +534,7 @@ public class Order {
         }
     }
 
+
     public void addItem(
             OrderItem item
     ) {
@@ -415,6 +543,7 @@ public class Order {
 
         this.items.add(item);
     }
+
 
     public void removeItem(
             OrderItem item
@@ -425,7 +554,19 @@ public class Order {
         item.setOrder(null);
     }
 
+
+    public enum PaymentStatus {
+
+        PENDING,
+
+        PARTIALLY_PAID,
+
+        SETTLED
+    }
+
+
     public enum OrderStatus {
+
         NEW_ORDER,
 
         PROCESSING_AT_STORE,
@@ -436,6 +577,7 @@ public class Order {
 
         CANCELLED
     }
+
 
     @Entity
     @Table(
@@ -525,12 +667,15 @@ public class Order {
         )
         private BigDecimal lineTotal;
 
+
         public OrderItem() {
         }
+
 
         public UUID getId() {
             return id;
         }
+
 
         public void setId(
                 UUID id
@@ -538,9 +683,11 @@ public class Order {
             this.id = id;
         }
 
+
         public Order getOrder() {
             return order;
         }
+
 
         public void setOrder(
                 Order order
@@ -549,9 +696,11 @@ public class Order {
                     order;
         }
 
+
         public UUID getProductId() {
             return productId;
         }
+
 
         public void setProductId(
                 UUID productId
@@ -560,9 +709,11 @@ public class Order {
                     productId;
         }
 
+
         public String getProductName() {
             return productName;
         }
+
 
         public void setProductName(
                 String productName
@@ -571,9 +722,11 @@ public class Order {
                     productName;
         }
 
+
         public UUID getProductTypeId() {
             return productTypeId;
         }
+
 
         public void setProductTypeId(
                 UUID productTypeId
@@ -582,9 +735,11 @@ public class Order {
                     productTypeId;
         }
 
+
         public String getProductTypeName() {
             return productTypeName;
         }
+
 
         public void setProductTypeName(
                 String productTypeName
@@ -593,9 +748,11 @@ public class Order {
                     productTypeName;
         }
 
+
         public UUID getServiceId() {
             return serviceId;
         }
+
 
         public void setServiceId(
                 UUID serviceId
@@ -604,9 +761,11 @@ public class Order {
                     serviceId;
         }
 
+
         public String getServiceName() {
             return serviceName;
         }
+
 
         public void setServiceName(
                 String serviceName
@@ -615,9 +774,11 @@ public class Order {
                     serviceName;
         }
 
+
         public Product.PricingUnit getUnit() {
             return unit;
         }
+
 
         public void setUnit(
                 Product.PricingUnit unit
@@ -626,9 +787,11 @@ public class Order {
                     unit;
         }
 
+
         public BigDecimal getQuantity() {
             return quantity;
         }
+
 
         public void setQuantity(
                 BigDecimal quantity
@@ -637,9 +800,11 @@ public class Order {
                     quantity;
         }
 
+
         public BigDecimal getUnitPrice() {
             return unitPrice;
         }
+
 
         public void setUnitPrice(
                 BigDecimal unitPrice
@@ -648,9 +813,11 @@ public class Order {
                     unitPrice;
         }
 
+
         public BigDecimal getLineTotal() {
             return lineTotal;
         }
+
 
         public void setLineTotal(
                 BigDecimal lineTotal

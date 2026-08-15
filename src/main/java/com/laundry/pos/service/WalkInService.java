@@ -335,6 +335,22 @@ public class WalkInService {
                 totalAmount
         );
 
+        order.setPaidAmount(
+        BigDecimal.ZERO
+        );
+
+        order.setBalanceAmount(
+                totalAmount
+        );
+
+        order.setPaymentStatus(
+                Order.PaymentStatus.PENDING
+        );
+
+        order.setSettled(
+                false
+        );
+
         order.setPickupDate(
                 pickupDate
         );
@@ -845,6 +861,11 @@ public class WalkInService {
                 order.getExpressChargePercentage(),
                 order.getExpressChargeAmount(),
                 order.getTotalAmount(),
+
+                order.getPaidAmount(),
+                order.getBalanceAmount(),
+                order.getPaymentStatus(),
+
                 order.getPickupDate(),
                 order.getPickupTime(),
                 order.getDeliveryDate(),

@@ -583,28 +583,33 @@ public class OrderService {
                         )
                         .toList();
 
-        return new OrderResponse(
-                order.getId(),
-                order.getOrderNumber(),
-                customerResponse,
-                items,
-                order.getSubtotal(),
-                order.getDiscountAmount(),
-                order.getCouponCode(),
-                order.getExpressChargePercentage(),
-                order.getExpressChargeAmount(),
-                order.getTotalAmount(),
-                order.getPickupDate(),
-                order.getPickupTime(),
-                order.getDeliveryDate(),
-                order.getDeliveryTime(),
-                order.getStorageLabel(),
-                order.isHomeDelivery(),
-                order.isSettled(),
-                order.getStatus(),
-                order.getCreatedAt(),
-                order.getUpdatedAt(),
-                message
-        );
+                return new OrderResponse(
+                        order.getId(),
+                        order.getOrderNumber(),
+                        customerResponse,
+                        items,
+                        order.getSubtotal(),
+                        order.getDiscountAmount(),
+                        order.getCouponCode(),
+                        order.getExpressChargePercentage(),
+                        order.getExpressChargeAmount(),
+                        order.getTotalAmount(),
+
+                        order.getPaidAmount(),
+                        order.getBalanceAmount(),
+                        order.getPaymentStatus(),
+
+                        order.getPickupDate(),
+                        order.getPickupTime(),
+                        order.getDeliveryDate(),
+                        order.getDeliveryTime(),
+                        order.getStorageLabel(),
+                        order.isHomeDelivery(),
+                        order.isSettled(),
+                        order.getStatus(),
+                        order.getCreatedAt(),
+                        order.getUpdatedAt(),
+                        "Walk-in order created successfully"
+                );
     }
 }

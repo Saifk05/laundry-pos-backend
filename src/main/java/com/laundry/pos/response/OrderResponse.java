@@ -20,6 +20,11 @@ public record OrderResponse(
         BigDecimal expressChargePercentage,
         BigDecimal expressChargeAmount,
         BigDecimal totalAmount,
+
+        BigDecimal paidAmount,
+        BigDecimal balanceAmount,
+        Order.PaymentStatus paymentStatus,
+
         LocalDate pickupDate,
         String pickupTime,
         LocalDate deliveryDate,
