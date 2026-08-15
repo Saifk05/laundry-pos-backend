@@ -161,7 +161,7 @@ public class Order {
             length = 40
     )
     private OrderStatus status =
-            OrderStatus.NEW_ORDER;
+            OrderStatus.TAGGED;
 
     @Column(
             name = "created_at",
@@ -585,7 +585,7 @@ public class Order {
 
     public enum OrderStatus {
 
-        NEW_ORDER,
+        TAGGED,
 
         PROCESSING_AT_STORE,
 

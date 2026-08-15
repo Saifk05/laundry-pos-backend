@@ -42,7 +42,8 @@ public interface OrderRepository
             SELECT o
             FROM Order o
             WHERE
-                (:status IS NULL OR o.status = :status)
+                o.status <> com.laundry.pos.model.Order.OrderStatus.DELIVERED
+                AND (:status IS NULL OR o.status = :status)
                 AND (
                     :search IS NULL
                     OR :search = ''

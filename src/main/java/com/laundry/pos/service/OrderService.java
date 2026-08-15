@@ -157,7 +157,7 @@ public class OrderService {
 
         if (
                 previousStatus
-                        == Order.OrderStatus.NEW_ORDER
+                        == Order.OrderStatus.TAGGED
                         &&
                 updatedOrder.getStatus()
                         == Order.OrderStatus.PROCESSING_AT_STORE
@@ -587,7 +587,7 @@ public class OrderService {
 
         if (
                 currentStatus
-                        == Order.OrderStatus.NEW_ORDER
+                        == Order.OrderStatus.TAGGED
                         &&
                 newStatus
                         == Order.OrderStatus.PROCESSING_AT_STORE
