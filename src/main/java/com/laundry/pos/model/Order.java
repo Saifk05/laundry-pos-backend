@@ -176,6 +176,11 @@ public class Order {
     )
     private LocalDateTime updatedAt;
 
+    @Column(
+            name = "delivered_at"
+    )
+    private LocalDateTime deliveredAt;
+
     @OneToMany(
             mappedBy = "order",
             cascade = CascadeType.ALL,
@@ -512,6 +517,19 @@ public class Order {
     ) {
         this.updatedAt =
                 updatedAt;
+    }
+
+
+    public LocalDateTime getDeliveredAt() {
+        return deliveredAt;
+    }
+
+
+    public void setDeliveredAt(
+            LocalDateTime deliveredAt
+    ) {
+        this.deliveredAt =
+                deliveredAt;
     }
 
 
