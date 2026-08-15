@@ -19,12 +19,17 @@ import java.util.UUID;
 public class OrderService {
 
     private final OrderRepository orderRepository;
+    private final WhatsAppService whatsAppService;
 
     public OrderService(
-            OrderRepository orderRepository
+            OrderRepository orderRepository,
+            WhatsAppService whatsAppService
     ) {
         this.orderRepository =
                 orderRepository;
+
+        this.whatsAppService =
+                whatsAppService;
     }
 
     @Transactional(readOnly = true)
@@ -138,6 +143,9 @@ public class OrderService {
                 request.status()
         );
 
+        Order.OrderStatus previousStatus =
+                order.getStatus();
+
         order.setStatus(
                 request.status()
         );
@@ -146,6 +154,38 @@ public class OrderService {
                 orderRepository.save(
                         order
                 );
+
+        if (
+                previousStatus
+                        == Order.OrderStatus.NEW_ORDER
+                        &&
+                updatedOrder.getStatus()
+                        == Order.OrderStatus.PROCESSING_AT_STORE
+        ) {
+
+            try {
+
+                whatsAppService.sendProcessingMessage(
+                        updatedOrder
+                                .getCustomer()
+                                .getPhone(),
+
+                        updatedOrder
+                                .getCustomer()
+                                .getName(),
+
+                        updatedOrder
+                                .getOrderNumber()
+                );
+
+            } catch (Exception exception) {
+
+                System.out.println(
+                        "WhatsApp processing message failed: "
+                                + exception.getMessage()
+                );
+            }
+        }
 
         return toB2COrderResponse(
                 updatedOrder
@@ -181,6 +221,29 @@ public class OrderService {
                 orderRepository.save(
                         order
                 );
+
+        try {
+
+            whatsAppService.sendReadyMessage(
+                    updatedOrder
+                            .getCustomer()
+                            .getPhone(),
+
+                    updatedOrder
+                            .getCustomer()
+                            .getName(),
+
+                    updatedOrder
+                            .getOrderNumber()
+            );
+
+        } catch (Exception exception) {
+
+            System.out.println(
+                    "WhatsApp ready message failed: "
+                            + exception.getMessage()
+            );
+        }
 
         return toB2COrderResponse(
                 updatedOrder
@@ -219,6 +282,29 @@ public class OrderService {
                 orderRepository.save(
                         order
                 );
+
+        try {
+
+            whatsAppService.sendDeliveredMessage(
+                    updatedOrder
+                            .getCustomer()
+                            .getPhone(),
+
+                    updatedOrder
+                            .getCustomer()
+                            .getName(),
+
+                    updatedOrder
+                            .getOrderNumber()
+            );
+
+        } catch (Exception exception) {
+
+            System.out.println(
+                    "WhatsApp delivered message failed: "
+                            + exception.getMessage()
+            );
+        }
 
         return toB2COrderResponse(
                 updatedOrder
@@ -263,6 +349,29 @@ public class OrderService {
                 orderRepository.save(
                         order
                 );
+
+        try {
+
+            whatsAppService.sendCancelledMessage(
+                    updatedOrder
+                            .getCustomer()
+                            .getPhone(),
+
+                    updatedOrder
+                            .getCustomer()
+                            .getName(),
+
+                    updatedOrder
+                            .getOrderNumber()
+            );
+
+        } catch (Exception exception) {
+
+            System.out.println(
+                    "WhatsApp cancelled message failed: "
+                            + exception.getMessage()
+            );
+        }
 
         return toB2COrderResponse(
                 updatedOrder
@@ -479,7 +588,7 @@ public class OrderService {
         if (
                 currentStatus
                         == Order.OrderStatus.NEW_ORDER
-                &&
+                        &&
                 newStatus
                         == Order.OrderStatus.PROCESSING_AT_STORE
         ) {
@@ -489,7 +598,7 @@ public class OrderService {
         if (
                 currentStatus
                         == Order.OrderStatus.PROCESSING_AT_STORE
-                &&
+                        &&
                 newStatus
                         == Order.OrderStatus.READY_ORDER
         ) {
@@ -499,7 +608,7 @@ public class OrderService {
         if (
                 currentStatus
                         == Order.OrderStatus.READY_ORDER
-                &&
+                        &&
                 newStatus
                         == Order.OrderStatus.DELIVERED
         ) {
@@ -533,19 +642,28 @@ public class OrderService {
         return new B2COrderResponse(
                 order.getId(),
                 order.getOrderNumber(),
+
                 order.getCustomer()
                         .getName(),
+
                 order.getCustomer()
                         .getPhone(),
+
                 order.getTotalAmount(),
+
                 order.getPickupDate(),
                 order.getPickupTime(),
+
                 order.getDeliveryDate(),
                 order.getDeliveryTime(),
+
                 order.getStorageLabel(),
+
                 order.isHomeDelivery(),
                 order.isSettled(),
+
                 order.getStatus(),
+
                 order.getCreatedAt(),
                 order.getUpdatedAt()
         );
@@ -556,65 +674,88 @@ public class OrderService {
             String message
     ) {
 
-        OrderResponse.CustomerResponse
-                customerResponse =
+        OrderResponse.CustomerResponse customerResponse =
                 new OrderResponse.CustomerResponse(
                         order.getCustomer()
                                 .getId(),
+
                         order.getCustomer()
                                 .getName(),
+
                         order.getCustomer()
                                 .getPhone()
                 );
 
-        List<OrderResponse.OrderItemResponse>
-                items =
+        List<OrderResponse.OrderItemResponse> items =
                 order.getItems()
                         .stream()
                         .map(item ->
                                 new OrderResponse.OrderItemResponse(
                                         item.getId(),
+
                                         item.getProductId(),
                                         item.getProductName(),
+
                                         item.getProductTypeId(),
                                         item.getProductTypeName(),
+
                                         item.getServiceId(),
                                         item.getServiceName(),
+
                                         item.getUnit(),
                                         item.getQuantity(),
+
                                         item.getUnitPrice(),
                                         item.getLineTotal()
                                 )
                         )
                         .toList();
 
-                return new OrderResponse(
-                        order.getId(),
-                        order.getOrderNumber(),
-                        customerResponse,
-                        items,
-                        order.getSubtotal(),
-                        order.getDiscountAmount(),
-                        order.getCouponCode(),
-                        order.getExpressChargePercentage(),
-                        order.getExpressChargeAmount(),
-                        order.getTotalAmount(),
+        return new OrderResponse(
+                order.getId(),
+                order.getOrderNumber(),
 
-                        order.getPaidAmount(),
-                        order.getBalanceAmount(),
-                        order.getPaymentStatus(),
+                customerResponse,
 
-                        order.getPickupDate(),
-                        order.getPickupTime(),
-                        order.getDeliveryDate(),
-                        order.getDeliveryTime(),
-                        order.getStorageLabel(),
-                        order.isHomeDelivery(),
-                        order.isSettled(),
-                        order.getStatus(),
-                        order.getCreatedAt(),
-                        order.getUpdatedAt(),
-                        "Walk-in order created successfully"
-                );
+                items,
+
+                order.getSubtotal(),
+
+                order.getDiscountAmount(),
+
+                order.getCouponCode(),
+
+                order.getExpressChargePercentage(),
+
+                order.getExpressChargeAmount(),
+
+                order.getTotalAmount(),
+
+                order.getPaidAmount(),
+
+                order.getBalanceAmount(),
+
+                order.getPaymentStatus(),
+
+                order.getPickupDate(),
+                order.getPickupTime(),
+
+                order.getDeliveryDate(),
+                order.getDeliveryTime(),
+
+                order.getStorageLabel(),
+
+                order.isHomeDelivery(),
+
+                order.isSettled(),
+
+                order.getStatus(),
+
+                order.getCreatedAt(),
+
+                order.getUpdatedAt(),
+
+                "Walk-in order created successfully"
+        );
     }
 }

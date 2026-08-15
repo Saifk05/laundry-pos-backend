@@ -17,24 +17,34 @@ import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class BillService {
 
     private final OrderRepository orderRepository;
     private final PaymentRepository paymentRepository;
+    private final BillPdfService billPdfService;
+    private final WhatsAppService whatsAppService;
 
     public BillService(
             OrderRepository orderRepository,
-            PaymentRepository paymentRepository
+            PaymentRepository paymentRepository,
+            BillPdfService billPdfService,
+            WhatsAppService whatsAppService
     ) {
         this.orderRepository =
                 orderRepository;
 
         this.paymentRepository =
                 paymentRepository;
-    }
 
+        this.billPdfService =
+                billPdfService;
+
+        this.whatsAppService =
+                whatsAppService;
+    }
 
     @Transactional(readOnly = true)
     public BillListResponse getBills() {
@@ -43,13 +53,11 @@ public class BillService {
                 orderRepository
                         .findAllByOrderByCreatedAtDesc();
 
-
         List<BillResponse> bills =
                 orders
                         .stream()
                         .map(this::toBillResponse)
                         .toList();
-
 
         BigDecimal totalPaidAmount =
                 bills
@@ -60,7 +68,6 @@ public class BillService {
                                 BigDecimal::add
                         );
 
-
         BigDecimal totalDueAmount =
                 bills
                         .stream()
@@ -69,7 +76,6 @@ public class BillService {
                                 BigDecimal.ZERO,
                                 BigDecimal::add
                         );
-
 
         BigDecimal totalAmount =
                 bills
@@ -80,7 +86,6 @@ public class BillService {
                                 BigDecimal::add
                         );
 
-
         BigDecimal totalTax =
                 bills
                         .stream()
@@ -89,7 +94,6 @@ public class BillService {
                                 BigDecimal.ZERO,
                                 BigDecimal::add
                         );
-
 
         BigDecimal totalTaxableAmount =
                 bills
@@ -100,7 +104,6 @@ public class BillService {
                                 BigDecimal::add
                         );
 
-
         BigDecimal totalExpressAmount =
                 bills
                         .stream()
@@ -109,7 +112,6 @@ public class BillService {
                                 BigDecimal.ZERO,
                                 BigDecimal::add
                         );
-
 
         BigDecimal totalDiscountAmount =
                 bills
@@ -120,7 +122,6 @@ public class BillService {
                                 BigDecimal::add
                         );
 
-
         BigDecimal totalGrossAmount =
                 bills
                         .stream()
@@ -129,7 +130,6 @@ public class BillService {
                                 BigDecimal.ZERO,
                                 BigDecimal::add
                         );
-
 
         return new BillListResponse(
                 "Bills fetched successfully",
@@ -155,6 +155,52 @@ public class BillService {
         );
     }
 
+    @Transactional(readOnly = true)
+    public String sendReceiptToWhatsApp(
+            UUID orderId
+    ) {
+
+        Order order =
+                orderRepository
+                        .findById(
+                                orderId
+                        )
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Order not found"
+                                )
+                        );
+
+        String mobile =
+                order.getCustomer()
+                        .getPhone();
+
+        if (
+                mobile == null ||
+                mobile.isBlank()
+        ) {
+
+            throw new RuntimeException(
+                    "Customer mobile number is required"
+            );
+        }
+
+        String orderNumber =
+                order.getOrderNumber();
+
+        byte[] pdf =
+                billPdfService
+                        .generateReceipt(
+                                orderId
+                        );
+
+        return whatsAppService
+                .sendReceipt(
+                        mobile,
+                        pdf,
+                        orderNumber
+                );
+    }
 
     private BillResponse toBillResponse(
             Order order
@@ -165,62 +211,39 @@ public class BillService {
                         order.getSubtotal()
                 );
 
-
         BigDecimal discountAmount =
                 money(
                         order.getDiscountAmount()
                 );
-
 
         BigDecimal expressAmount =
                 money(
                         order.getExpressChargeAmount()
                 );
 
-
         BigDecimal grossTotal =
                 money(
                         order.getTotalAmount()
                 );
-
 
         BigDecimal paidAmount =
                 money(
                         order.getPaidAmount()
                 );
 
-
         BigDecimal dueAmount =
                 money(
                         order.getBalanceAmount()
                 );
 
-
-        /*
-         * TAX IS NOT IMPLEMENTED IN ORDER YET.
-         *
-         * Keeping this 0.00 until we add
-         * GST / tax support.
-         */
         BigDecimal tax =
                 money(
                         BigDecimal.ZERO
                 );
 
-
-        /*
-         * Current subtotal is being treated
-         * as taxable amount.
-         */
         BigDecimal taxableAmount =
                 subtotal;
 
-
-        /*
-         * Total before express charge.
-         *
-         * subtotal - discount
-         */
         BigDecimal total =
                 subtotal.subtract(
                         discountAmount
@@ -240,24 +263,20 @@ public class BillService {
                         total
                 );
 
-
         BillResponse.BillStatus billStatus =
                 getBillStatus(
                         order
                 );
-
 
         LocalDateTime paidAt =
                 getPaidAt(
                         order
                 );
 
-
         String invoiceNumber =
                 buildInvoiceNumber(
                         order.getOrderNumber()
                 );
-
 
         return new BillResponse(
                 order.getId(),
@@ -294,7 +313,6 @@ public class BillService {
         );
     }
 
-
     private BillResponse.BillStatus getBillStatus(
             Order order
     ) {
@@ -307,7 +325,6 @@ public class BillService {
             return BillResponse.BillStatus.CANCELLED;
         }
 
-
         if (
                 order.getPaymentStatus()
                         == Order.PaymentStatus.SETTLED
@@ -315,7 +332,6 @@ public class BillService {
 
             return BillResponse.BillStatus.PAID;
         }
-
 
         if (
                 order.getPaymentStatus()
@@ -325,19 +341,13 @@ public class BillService {
             return BillResponse.BillStatus.PARTIALLY_PAID;
         }
 
-
         return BillResponse.BillStatus.DRAFT;
     }
-
 
     private LocalDateTime getPaidAt(
             Order order
     ) {
 
-        /*
-         * Paid At should only appear when
-         * the bill is completely settled.
-         */
         if (
                 order.getPaymentStatus()
                         != Order.PaymentStatus.SETTLED
@@ -346,13 +356,11 @@ public class BillService {
             return null;
         }
 
-
         List<Payment> payments =
                 paymentRepository
                         .findAllByOrder_IdOrderByPaidAtDesc(
                                 order.getId()
                         );
-
 
         return payments
                 .stream()
@@ -367,7 +375,6 @@ public class BillService {
                 .orElse(null);
     }
 
-
     private String buildInvoiceNumber(
             String orderNumber
     ) {
@@ -379,7 +386,6 @@ public class BillService {
 
             return null;
         }
-
 
         if (
                 orderNumber.startsWith(
@@ -393,11 +399,9 @@ public class BillService {
                     );
         }
 
-
         return "INV-" +
                 orderNumber;
     }
-
 
     private BigDecimal money(
             BigDecimal value
@@ -413,7 +417,6 @@ public class BillService {
                             RoundingMode.HALF_UP
                     );
         }
-
 
         return value.setScale(
                 2,
