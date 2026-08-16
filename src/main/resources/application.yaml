@@ -26,4 +26,38 @@ whatsapp:
   api-url: https://graph.facebook.com/v25.0
   phone-number-id: 1247146801821169
   business-account-id: 2478197572681762
-  access-token: EAAfpFZAkGN0sBSLPdyFLuiUryUHLrQnGypMMuycvgNrZCFebNE8em2HrMgqGT5hzABKE2mExpJhrSkZAzZCygthPXlZBwbQkqGYQ9vgNTczRwhHZA5p8oZCcbZAZAO4NpuQMSzZCGmMqO9rKT2C9oGlQlb7A0rnKe6ZBHZBrmT9OUmZAEYTFuGWCV6MULsHKQs5HfmZAvZBzrH6S9ZBASHt0XmW7g81SnfKNNJpVJ96c4iLFmO3tO4YeFlZCW3EqQ6r0zGX7FSPuRFaPrS30twjyjq5ZCM
+  access-token: EAAfpFZAkGN0sBSNozdapX57wrYTlg8aFQKSs2gEU1YEIaXVYbEmxmjs23ZBUnxUqSllNSO9ZAyKpF3wGcVbG11N9AlAqG4laDtGo27DcApOi5dgDCP02cYGC9axG8g0tQCNShim1qIaLSbKhpfRnyUhebm335QgCFaoDwFhbSulSsgw8uLd0I1H7ibmpE6EvtKz8vs9GsBouKZApJLUpnVPdkNQwK372ZAch70cisz3VkY0btooaIVFFpk1c0WbZCwQOfNDwLUi7dsb06ZAQPVvwtcJ
+
+# spring:
+#   application:
+#     name: laundry-pos-backend
+
+#   datasource:
+#     url: jdbc:sqlite:./data/laundry.db
+#     driver-class-name: org.sqlite.JDBC
+
+#   jpa:
+#     database-platform: org.hibernate.community.dialect.SQLiteDialect
+#     hibernate:
+#       ddl-auto: update
+#     open-in-view: false
+#     properties:
+#       hibernate:
+#         show_sql: false
+#         format_sql: true
+
+# server:
+#   port: 8080
+#   error:
+#     include-message: always
+
+# app:
+#   jwt:
+#     secret: ${JWT_SECRET:c3VwZXItc2VjcmV0LWtleS1mb3ItbGF1bmRyeS1wb3MtMjAyNi0xMjM0NTY=}
+#     expiration-ms: 86400000
+
+# whatsapp:
+#   api-url: https://graph.facebook.com/v25.0
+#   phone-number-id: ${WHATSAPP_PHONE_NUMBER_ID:1247146801821169}
+#   business-account-id: ${WHATSAPP_BUSINESS_ACCOUNT_ID:2478197572681762}
+#   access-token: ${WHATSAPP_ACCESS_TOKEN:EAAfpFZAkGN0sBSNozdapX57wrYTlg8aFQKSs2gEU1YEIaXVYbEmxmjs23ZBUnxUqSllNSO9ZAyKpF3wGcVbG11N9AlAqG4laDtGo27DcApOi5dgDCP02cYGC9axG8g0tQCNShim1qIaLSbKhpfRnyUhebm335QgCFaoDwFhbSulSsgw8uLd0I1H7ibmpE6EvtKz8vs9GsBouKZApJLUpnVPdkNQwK372ZAch70cisz3VkY0btooaIVFFpk1c0WbZCwQOfNDwLUi7dsb06ZAQPVvwtcJ}

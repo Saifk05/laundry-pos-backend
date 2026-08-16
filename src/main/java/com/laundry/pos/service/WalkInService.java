@@ -279,15 +279,8 @@ public class WalkInService {
                         totalAmount
                 );
 
-        Long sequence =
-                orderRepository
-                        .getNextOrderSequence();
-
         String orderNumber =
-                String.format(
-                        "LAUNDRY-%04d",
-                        sequence
-                );
+                generateOrderNumber();
 
         LocalDate pickupDate =
                 LocalDate.now();
@@ -336,7 +329,7 @@ public class WalkInService {
         );
 
         order.setPaidAmount(
-        BigDecimal.ZERO
+                BigDecimal.ZERO
         );
 
         order.setBalanceAmount(
@@ -388,6 +381,38 @@ public class WalkInService {
         );
     }
 
+    private String generateOrderNumber() {
+
+        String prefix =
+                "LAUNDRY-";
+
+        return orderRepository
+                .findTopByOrderNumberStartingWithOrderByOrderNumberDesc(
+                        prefix
+                )
+                .map(order -> {
+
+                    String currentNumber =
+                            order.getOrderNumber()
+                                    .substring(
+                                            prefix.length()
+                                    );
+
+                    long nextNumber =
+                            Long.parseLong(
+                                    currentNumber
+                            ) + 1;
+
+                    return String.format(
+                            "LAUNDRY-%04d",
+                            nextNumber
+                    );
+                })
+                .orElse(
+                        "LAUNDRY-0001"
+                );
+    }
+
     private Customer findOrCreateCustomer(
             WalkInOrderRequest.CustomerRequest request
     ) {
@@ -404,7 +429,7 @@ public class WalkInService {
 
                     if (
                             request.name() == null ||
-                            request.name().isBlank()
+                                    request.name().isBlank()
                     ) {
 
                         throw new RuntimeException(
@@ -468,10 +493,10 @@ public class WalkInService {
 
         if (
                 request.quantity() == null ||
-                request.quantity()
-                        .compareTo(
-                                BigDecimal.ZERO
-                        ) <= 0
+                        request.quantity()
+                                .compareTo(
+                                        BigDecimal.ZERO
+                                ) <= 0
         ) {
 
             throw new RuntimeException(
@@ -678,7 +703,7 @@ public class WalkInService {
 
         if (
                 request.customer().phone() == null ||
-                request.customer().phone().isBlank()
+                        request.customer().phone().isBlank()
         ) {
 
             throw new RuntimeException(
@@ -688,7 +713,7 @@ public class WalkInService {
 
         if (
                 request.items() == null ||
-                request.items().isEmpty()
+                        request.items().isEmpty()
         ) {
 
             throw new RuntimeException(
@@ -707,7 +732,7 @@ public class WalkInService {
 
         if (
                 request.deliveryTime() == null ||
-                request.deliveryTime().isBlank()
+                        request.deliveryTime().isBlank()
         ) {
 
             throw new RuntimeException(

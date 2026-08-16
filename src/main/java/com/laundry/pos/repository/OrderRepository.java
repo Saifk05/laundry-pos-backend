@@ -31,12 +31,9 @@ public interface OrderRepository
             String orderNumber
     );
 
-    @Query(
-            value =
-                    "SELECT nextval('laundry_order_number_seq')",
-            nativeQuery = true
-    )
-    Long getNextOrderSequence();
+    Optional<Order> findTopByOrderNumberStartingWithOrderByOrderNumberDesc(
+            String prefix
+    );
 
     @Query("""
             SELECT o
