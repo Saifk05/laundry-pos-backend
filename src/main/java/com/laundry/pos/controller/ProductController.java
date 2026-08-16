@@ -1,13 +1,18 @@
 package com.laundry.pos.controller;
 
 import com.laundry.pos.request.ProductRequest;
+import com.laundry.pos.response.BulkProductResponse;
 import com.laundry.pos.response.ProductResponse;
 import com.laundry.pos.service.ProductService;
+
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
+
 
 @RestController
 @RequestMapping("/api/products")
@@ -15,15 +20,15 @@ public class ProductController {
 
     private final ProductService productService;
 
+
     public ProductController(
             ProductService productService
     ) {
-        this.productService = productService;
+
+        this.productService =
+                productService;
     }
 
-    /* =========================================
-       CREATE PRODUCT
-    ========================================= */
 
     @PostMapping
     public ResponseEntity<ProductResponse> createProduct(
@@ -31,16 +36,43 @@ public class ProductController {
     ) {
 
         ProductResponse response =
-                productService.createProduct(request);
+                productService
+                        .createProduct(
+                                request
+                        );
+
 
         return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(response);
+                .status(
+                        HttpStatus.CREATED
+                )
+                .body(
+                        response
+                );
     }
 
-    /* =========================================
-       GET ALL PRODUCTS
-    ========================================= */
+
+    @PostMapping(
+            value = "/bulk/pdf",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    public ResponseEntity<BulkProductResponse> bulkUploadProductsPdf(
+            @RequestParam("file")
+            MultipartFile file
+    ) {
+
+        BulkProductResponse response =
+                productService
+                        .bulkUploadProductsPdf(
+                                file
+                        );
+
+
+        return ResponseEntity.ok(
+                response
+        );
+    }
+
 
     @GetMapping
     public ResponseEntity<
@@ -48,13 +80,11 @@ public class ProductController {
             > getAllProducts() {
 
         return ResponseEntity.ok(
-                productService.getAllProducts()
+                productService
+                        .getAllProducts()
         );
     }
 
-    /* =========================================
-       GET PRODUCT BY ID
-    ========================================= */
 
     @GetMapping("/{id}")
     public ResponseEntity<ProductResponse> getProductById(
@@ -62,13 +92,13 @@ public class ProductController {
     ) {
 
         return ResponseEntity.ok(
-                productService.getProductById(id)
+                productService
+                        .getProductById(
+                                id
+                        )
         );
     }
 
-    /* =========================================
-       UPDATE PRODUCT
-    ========================================= */
 
     @PutMapping("/{id}")
     public ResponseEntity<ProductResponse> updateProduct(
@@ -77,23 +107,25 @@ public class ProductController {
     ) {
 
         return ResponseEntity.ok(
-                productService.updateProduct(
-                        id,
-                        request
-                )
+                productService
+                        .updateProduct(
+                                id,
+                                request
+                        )
         );
     }
 
-    /* =========================================
-       DELETE / DEACTIVATE PRODUCT
-    ========================================= */
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteProduct(
             @PathVariable UUID id
     ) {
 
-        productService.deleteProduct(id);
+        productService
+                .deleteProduct(
+                        id
+                );
+
 
         return ResponseEntity
                 .noContent()

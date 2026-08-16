@@ -1,6 +1,7 @@
 package com.laundry.pos.repository;
 
 import com.laundry.pos.model.Product;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
