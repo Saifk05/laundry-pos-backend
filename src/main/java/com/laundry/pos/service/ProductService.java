@@ -49,7 +49,16 @@ public class ProductService {
                 new Product();
 
         product.setName(name);
+
+        product.setIcon(
+                request.icon() != null &&
+                !request.icon().isBlank()
+                        ? request.icon().trim()
+                        : null
+        );
+
         product.setUnit(request.unit());
+
         product.setActive(request.active());
 
         List<Product.ProductType> types =
@@ -155,7 +164,16 @@ public class ProductService {
                 });
 
         product.setName(name);
+
+        product.setIcon(
+                request.icon() != null &&
+                !request.icon().isBlank()
+                        ? request.icon().trim()
+                        : null
+        );
+
         product.setUnit(request.unit());
+
         product.setActive(request.active());
 
         List<Product.ProductType> types =
@@ -394,12 +412,13 @@ public class ProductService {
                         })
                         .toList();
 
-        return new ProductResponse(
-                product.getId(),
-                product.getName(),
-                product.getUnit(),
-                product.isActive(),
-                types
-        );
+                return new ProductResponse(
+                        product.getId(),
+                        product.getName(),
+                        product.getIcon(),
+                        product.getUnit(),
+                        product.isActive(),
+                        types
+                );
     }
 }

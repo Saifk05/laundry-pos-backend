@@ -806,13 +806,14 @@ public class WalkInService {
                         })
                         .toList();
 
-        return new ProductResponse(
-                product.getId(),
-                product.getName(),
-                product.getUnit(),
-                product.isActive(),
-                types
-        );
+                return new ProductResponse(
+                        product.getId(),
+                        product.getName(),
+                        product.getIcon(),
+                        product.getUnit(),
+                        product.isActive(),
+                        types
+                );
     }
 
     private CouponResponse toCouponResponse(
@@ -841,67 +842,73 @@ public class WalkInService {
         );
     }
 
+
     private OrderResponse toOrderResponse(
-            Order order
-    ) {
+        Order order
+) {
 
-        OrderResponse.CustomerResponse customerResponse =
-                new OrderResponse.CustomerResponse(
-                        order.getCustomer()
-                                .getId(),
-                        order.getCustomer()
-                                .getName(),
-                        order.getCustomer()
-                                .getPhone()
-                );
+    OrderResponse.CustomerResponse customerResponse =
+            new OrderResponse.CustomerResponse(
+                    order.getCustomer().getId(),
+                    order.getCustomer().getName(),
+                    order.getCustomer().getPhone()
+            );
 
-        List<OrderResponse.OrderItemResponse> items =
-                order.getItems()
-                        .stream()
-                        .map(item ->
-                                new OrderResponse.OrderItemResponse(
-                                        item.getId(),
-                                        item.getProductId(),
-                                        item.getProductName(),
-                                        item.getProductTypeId(),
-                                        item.getProductTypeName(),
-                                        item.getServiceId(),
-                                        item.getServiceName(),
-                                        item.getUnit(),
-                                        item.getQuantity(),
-                                        item.getUnitPrice(),
-                                        item.getLineTotal()
-                                )
-                        )
-                        .toList();
+    List<OrderResponse.OrderItemResponse> items =
+            order.getItems()
+                    .stream()
+                    .map(item ->
+                            new OrderResponse.OrderItemResponse(
+                                    item.getId(),
+                                    item.getProductId(),
+                                    item.getProductName(),
+                                    item.getProductTypeId(),
+                                    item.getProductTypeName(),
+                                    item.getServiceId(),
+                                    item.getServiceName(),
+                                    item.getUnit(),
+                                    item.getQuantity(),
+                                    item.getUnitPrice(),
+                                    item.getLineTotal()
+                            )
+                    )
+                    .toList();
 
-        return new OrderResponse(
-                order.getId(),
-                order.getOrderNumber(),
-                customerResponse,
-                items,
-                order.getSubtotal(),
-                order.getDiscountAmount(),
-                order.getCouponCode(),
-                order.getExpressChargePercentage(),
-                order.getExpressChargeAmount(),
-                order.getTotalAmount(),
+    boolean expressDelivery =
+            order.getExpressChargePercentage() != null
+                    &&
+            order.getExpressChargePercentage()
+                    .compareTo(BigDecimal.ZERO) > 0;
 
-                order.getPaidAmount(),
-                order.getBalanceAmount(),
-                order.getPaymentStatus(),
+    return new OrderResponse(
+            order.getId(),
+            order.getOrderNumber(),
+            customerResponse,
+            items,
+            order.getSubtotal(),
+            order.getDiscountAmount(),
+            order.getCouponCode(),
+            expressDelivery,
+            order.getExpressChargePercentage(),
+            order.getExpressChargeAmount(),
+            order.getTotalAmount(),
+            order.getPaidAmount(),
+            order.getBalanceAmount(),
+            order.getPaymentStatus(),
+            order.getPickupDate(),
+            order.getPickupTime(),
+            order.getDeliveryDate(),
+            order.getDeliveryTime(),
+            order.getStorageLabel(),
+            order.isHomeDelivery(),
+            order.isSettled(),
+            order.getStatus(),
+            order.getCreatedAt(),
+            order.getUpdatedAt(),
+            "Walk-in order created successfully"
+    );
+}
 
-                order.getPickupDate(),
-                order.getPickupTime(),
-                order.getDeliveryDate(),
-                order.getDeliveryTime(),
-                order.getStorageLabel(),
-                order.isHomeDelivery(),
-                order.isSettled(),
-                order.getStatus(),
-                order.getCreatedAt(),
-                order.getUpdatedAt(),
-                "Walk-in order created successfully"
-        );
-    }
+
+
 }

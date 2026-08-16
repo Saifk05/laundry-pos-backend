@@ -9,6 +9,7 @@ import java.util.UUID;
 public record ProductResponse(
         UUID id,
         String name,
+        String icon,
         Product.PricingUnit unit,
         boolean active,
         List<TypeResponse> types

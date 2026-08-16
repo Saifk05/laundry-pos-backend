@@ -17,6 +17,7 @@ public record OrderResponse(
         BigDecimal subtotal,
         BigDecimal discountAmount,
         String couponCode,
+        boolean expressDelivery,
         BigDecimal expressChargePercentage,
         BigDecimal expressChargeAmount,
         BigDecimal totalAmount,

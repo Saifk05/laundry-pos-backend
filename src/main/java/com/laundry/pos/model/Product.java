@@ -30,6 +30,11 @@ public class Product {
     )
     private String name;
 
+    @Column(
+            length = 50
+    )
+    private String icon;
+
     @Enumerated(EnumType.STRING)
     @Column(
             nullable = false,
@@ -71,6 +76,16 @@ public class Product {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+
+    public String getIcon() {
+        return icon;
+    }
+
+
+    public void setIcon(String icon) {
+        this.icon = icon;
     }
 
 

@@ -7,6 +7,7 @@ import java.util.List;
 
 public record ProductRequest(
         String name,
+        String icon,
         Product.PricingUnit unit,
         boolean active,
         List<TypeRequest> types

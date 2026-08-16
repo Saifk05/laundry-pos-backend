@@ -19,6 +19,7 @@ public record B2COrderResponse(
         String deliveryTime,
         String storageLabel,
         boolean homeDelivery,
+        boolean expressDelivery,
         boolean settled,
         Order.OrderStatus status,
         LocalDateTime createdAt,
