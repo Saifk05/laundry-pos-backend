@@ -381,37 +381,38 @@ public class WalkInService {
         );
     }
 
-    private String generateOrderNumber() {
+private String generateOrderNumber() {
 
-        String prefix =
-                "LAUNDRY-";
+    return orderRepository
+            .findTopByOrderByCreatedAtDesc()
+            .map(order -> {
 
-        return orderRepository
-                .findTopByOrderNumberStartingWithOrderByOrderNumberDesc(
-                        prefix
-                )
-                .map(order -> {
+                String currentOrderNumber =
+                        order.getOrderNumber();
 
-                    String currentNumber =
-                            order.getOrderNumber()
-                                    .substring(
-                                            prefix.length()
-                                    );
+                String numericPart =
+                        currentOrderNumber
+                                .replace(
+                                        "LAUNDRY-",
+                                        ""
+                                )
+                                .trim();
 
-                    long nextNumber =
-                            Long.parseLong(
-                                    currentNumber
-                            ) + 1;
+                long nextNumber =
+                        Long.parseLong(
+                                numericPart
+                        ) + 1;
 
-                    return String.format(
-                            "LAUNDRY-%04d",
-                            nextNumber
-                    );
-                })
-                .orElse(
-                        "LAUNDRY-0001"
+                return String.format(
+                        "%06d",
+                        nextNumber
                 );
-    }
+            })
+            .orElse(
+                    "000001"
+            );
+}
+
 
     private Customer findOrCreateCustomer(
             WalkInOrderRequest.CustomerRequest request

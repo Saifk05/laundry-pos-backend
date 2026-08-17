@@ -20,6 +20,8 @@ public interface OrderRepository
 
     List<Order> findAllByOrderByCreatedAtDesc();
 
+    Optional<Order> findTopByOrderByCreatedAtDesc();
+
     List<Order> findAllByStatusOrderByCreatedAtDesc(
             Order.OrderStatus status
     );
